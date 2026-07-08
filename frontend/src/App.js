@@ -67,29 +67,38 @@ function App() {
     try {
       const response = await fetch(`${API_BASE}tasks/`, {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({ 
-          title: title.trim(), 
-          description: description.trim(), 
-          status: 'To Do' 
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, description, status: 'To Do' })
       });
 
       if (response.ok) {
         setTitle('');
         setDescription('');
-        fetchTasks(); // 🔄 Re-fetch fresh tasks from the DB instantly!
-      } else {
-        const errorData = await response.json();
-        console.error("Task rejection response:", errorData);
+        fetchTasks();
       }
     } catch (error) {
       console.error("Error creating task:", error);
     }
   };
+
+  // 🗑️ NEW DELETE FUNCTION
+  const deleteTask = async (id) => {
+    try {
+      const response = await fetch(`${API_BASE}tasks/${id}/`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (response.ok) {
+        fetchTasks(); // 🔄 Re-fetch remaining tasks instantly!
+      } else {
+        console.error("Backend refused to delete task.");
+      }
+    } catch (error) {
+      console.error("Error deleting task:", error);
+    }
+  };
+
   if (!isLoggedIn) {
     return (
       <div className="auth-container">
@@ -175,14 +184,36 @@ function App() {
       <h2>Current Tasks:</h2>
       <div>
         {tasks.map(task => (
-          <div key={task.id} className="task-card">
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-              <strong style={{ fontSize: '1.15rem' }}>{task.title}</strong>
-              <span style={{ background: 'rgba(99, 102, 241, 0.2)', color: 'var(--accent)', padding: '0.25rem 0.75rem', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '600' }}>
-                {task.status}
-              </span>
+          <div key={task.id} className="task-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div style={{ flex: 1, paddingRight: '1rem' }}>
+              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '0.5rem' }}>
+                <strong style={{ fontSize: '1.15rem' }}>{task.title}</strong>
+                <span style={{ background: 'rgba(99, 102, 241, 0.2)', color: 'var(--accent)', padding: '0.25rem 0.75rem', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '600' }}>
+                  {task.status}
+                </span>
+              </div>
+              <p style={{ color: 'var(--text-muted)', margin: 0 }}>{task.description}</p>
             </div>
-            <p style={{ color: 'var(--text-muted)', margin: 0 }}>{task.description}</p>
+            
+            {/* 🗑️ UPDATED STYLED DELETE BUTTON */}
+            <button 
+              onClick={() => deleteTask(task.id)}
+              style={{
+                background: '#ef4444',
+                color: 'white',
+                border: 'none',
+                padding: '0.5rem 1rem',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontWeight: '600',
+                fontSize: '0.875rem',
+                transition: 'background 0.2s'
+              }}
+              onMouseEnter={(e) => e.target.style.background = '#dc2626'}
+              onMouseLeave={(e) => e.target.style.background = '#ef4444'}
+            >
+              Delete
+            </button>
           </div>
         ))}
       </div>
