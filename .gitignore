@@ -1,0 +1,12 @@
+# Node dependencies
+**/node_modules/
+**/build/
+
+# Python environment/caches
+**/__pycache__/
+*.pyc
+db.sqlite3
+
+# OS files
+.DS_Store
+Thumbs.db
