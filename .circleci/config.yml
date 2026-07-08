@@ -1,0 +1,26 @@
+version: 2.1
+
+executors:
+  docker-publisher:
+    docker:
+      - image: cimg/base:stable
+
+jobs:
+  build_containers:
+    executor: docker-publisher
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: 20.10.14
+      - run:
+          name: Build Backend Application Container
+          command: docker build -t tsphere-backend:latest ./backend
+      - run:
+          name: Build Frontend Application Container
+          command: docker build -t tsphere-frontend:latest ./frontend
+
+workflows:
+  version: 2
+  build-pipeline:
+    jobs:
+      - build_containers
