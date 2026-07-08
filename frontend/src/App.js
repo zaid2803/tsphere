@@ -1,24 +1,62 @@
 import React, { useState, useEffect } from 'react';
+import './App.css';
 
 function App() {
+  const [isLogin, setIsLogin] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [userDisplay, setUserDisplay] = useState('');
+  
   const [tasks, setTasks] = useState([]);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
 
-  // Grab the backend URL from environment variables
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/tasks/';
+  const API_BASE = 'http://localhost:8000/api/';
 
   useEffect(() => {
-    fetchTasks();
-  }, []);
+    if (isLoggedIn) {
+      fetchTasks();
+    }
+  }, [isLoggedIn]);
 
   const fetchTasks = async () => {
     try {
-      const response = await fetch(API_URL);
+      const response = await fetch(`${API_BASE}tasks/`);
       const data = await response.json();
       setTasks(data);
     } catch (error) {
       console.error("Error fetching tasks:", error);
+    }
+  };
+
+  const handleAuthSubmit = async (e) => {
+    e.preventDefault();
+    const endpoint = isLogin ? 'login/' : 'register/';
+    
+    try {
+      const response = await fetch(`${API_BASE}${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await response.json();
+
+      if (response.ok) {
+        if (isLogin) {
+          setIsLoggedIn(true);
+          setUserDisplay(data.username || username);
+          setPassword('');
+        } else {
+          alert("Registration successful! Please login.");
+          setIsLogin(true);
+          setPassword('');
+        }
+      } else {
+        alert(data.error || JSON.stringify(data));
+      }
+    } catch (error) {
+      console.error("Auth Error:", error);
     }
   };
 
@@ -27,7 +65,7 @@ function App() {
     if (!title.trim()) return;
 
     try {
-      const response = await fetch(API_URL, {
+      const response = await fetch(`${API_BASE}tasks/`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -43,46 +81,111 @@ function App() {
       if (response.ok) {
         setTitle('');
         setDescription('');
-        fetchTasks(); // 🔄 Re-fetch fresh data from the DB so it displays instantly!
+        fetchTasks(); // 🔄 Re-fetch fresh tasks from the DB instantly!
       } else {
         const errorData = await response.json();
-        console.error("API Rejected the Task:", errorData);
+        console.error("Task rejection response:", errorData);
       }
     } catch (error) {
-      console.error("Network connection error:", error);
+      console.error("Error creating task:", error);
     }
   };
-  
+  if (!isLoggedIn) {
+    return (
+      <div className="auth-container">
+        <h2 className="auth-title">{isLogin ? 'Welcome Back' : 'Create Account'}</h2>
+        <p className="auth-subtitle">
+          {isLogin ? 'Log in to manage your TaskSphere assets' : 'Sign up to get started'}
+        </p>
+        
+        <form onSubmit={handleAuthSubmit}>
+          <div className="form-group">
+            <label>Username</label>
+            <input 
+              type="text" 
+              className="form-input"
+              placeholder="Enter your username"
+              value={username} 
+              onChange={(e) => setUsername(e.target.value)} 
+              required 
+            />
+          </div>
+          <div className="form-group">
+            <label>Password</label>
+            <input 
+              type="password" 
+              className="form-input"
+              placeholder="••••••••"
+              value={password} 
+              onChange={(e) => setPassword(e.target.value)} 
+              required 
+            />
+          </div>
+          <button type="submit" className="auth-btn">
+            {isLogin ? 'Sign In' : 'Register'}
+          </button>
+        </form>
+
+        <p className="auth-toggle">
+          {isLogin ? "Don't have an account? " : "Already have an account? "}
+          <span className="auth-toggle-link" onClick={() => setIsLogin(!isLogin)}>
+            {isLogin ? 'Sign Up' : 'Sign In'}
+          </span>
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div style={{ padding: '20px', fontFamily: 'Arial' }}>
-      <h1>TaskSphere Management App</h1>
+    <div className="dashboard-container">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <h1>TaskSphere Dashboard</h1>
+        <div>
+          <span style={{ color: 'var(--text-muted)', marginRight: '1rem' }}>User: {userDisplay}</span>
+          <button className="auth-btn" style={{ width: 'auto', padding: '0.5rem 1rem', display: 'inline-block' }} onClick={() => setIsLoggedIn(false)}>
+            Logout
+          </button>
+        </div>
+      </div>
       
-      <form onSubmit={createTask} style={{ marginBottom: '20px' }}>
-        <input 
-          type="text" 
-          placeholder="Task Title" 
-          value={title} 
-          onChange={(e) => setTitle(e.target.value)} 
-          required 
-        />
-        <input 
-          type="text" 
-          placeholder="Task Description" 
-          value={description} 
-          onChange={(e) => setDescription(e.target.value)} 
-        />
-        <button type="submit">Add Task</button>
+      <form onSubmit={createTask} style={{ background: 'var(--bg-surface)', padding: '1.5rem', borderRadius: '12px', marginBottom: '2rem', border: '1px solid var(--border)' }}>
+        <h3>Create New Task</h3>
+        <div className="form-group">
+          <input 
+            type="text" 
+            className="form-input" 
+            placeholder="Task Title" 
+            value={title} 
+            onChange={(e) => setTitle(e.target.value)} 
+            required 
+          />
+        </div>
+        <div className="form-group">
+          <input 
+            type="text" 
+            className="form-input" 
+            placeholder="Task Description" 
+            value={description} 
+            onChange={(e) => setDescription(e.target.value)} 
+          />
+        </div>
+        <button type="submit" className="auth-btn" style={{ width: 'auto', padding: '0.75rem 2rem' }}>Add Task</button>
       </form>
 
       <h2>Current Tasks:</h2>
-      <ul>
+      <div>
         {tasks.map(task => (
-          <li key={task.id}>
-            <strong>{task.title}</strong> - {task.status} <br />
-            {task.description}
-          </li>
+          <div key={task.id} className="task-card">
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+              <strong style={{ fontSize: '1.15rem' }}>{task.title}</strong>
+              <span style={{ background: 'rgba(99, 102, 241, 0.2)', color: 'var(--accent)', padding: '0.25rem 0.75rem', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '600' }}>
+                {task.status}
+              </span>
+            </div>
+            <p style={{ color: 'var(--text-muted)', margin: 0 }}>{task.description}</p>
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   );
 }
