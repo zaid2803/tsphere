@@ -1,1 +1,1 @@
-# tsphere
+# ![CI/CD Build Status](https://github.com/zaid2803/tsphere/actions/workflows/ci.yml/badge.badge.svg)
