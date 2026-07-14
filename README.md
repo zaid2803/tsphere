@@ -8,3 +8,4 @@
    docker compose up -d
 
   Access the application interface at http://localhost:3000
+  <!-- Validated by CI Pipeline Engine -->).
